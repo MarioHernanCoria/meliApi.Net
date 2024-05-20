@@ -1,8 +1,8 @@
 using meliApi.Data;
 using meliApi.Services.Implementacion;
 using meliApi.Services.Interfaces;
-using meliApi.Servicios;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
 namespace meliApi
 {
@@ -10,20 +10,22 @@ namespace meliApi
     {
         public static void Main(string[] args)
         {
-            
             var builder = WebApplication.CreateBuilder(args);
+
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddHttpClient();
 
-
-            builder.Services.AddDbContext<AppDbContext>(options =>
+            // Configuración del DbContext de MySQL
+            builder.Services.AddDbContext<MySqlDbContext>(options =>
             {
-                options.UseSqlServer("name=DefaultConnection");
+                options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+                                 new MySqlServerVersion(new Version(8, 0, 21)));
             });
-            builder.Services.AddScoped<MeliTokenServicio>();
+
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",

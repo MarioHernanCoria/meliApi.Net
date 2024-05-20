@@ -6,6 +6,6 @@ namespace meliApi.Data.Repositories
 {
     public class UsuarioRepository : Repository<Usuario>, IUsuarioRepository
     {
-        public UsuarioRepository(AppDbContext context) : base(context) { }
+        public UsuarioRepository(MySqlDbContext context) : base(context) { }
     }
 }

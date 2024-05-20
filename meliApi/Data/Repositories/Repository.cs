@@ -7,9 +7,9 @@ namespace meliApi.Data.Repositories
     {
 
 
-        protected readonly AppDbContext _context;
+        protected readonly MySqlDbContext _context;
 
-        public Repository(AppDbContext context)
+        public Repository(MySqlDbContext context)
         {
             _context = context;
         }

@@ -15,16 +15,16 @@ namespace meliApi.Controllers
         public ItemsController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-051204-54755567add5497d0d03959f559ccab2-233127985");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-051904-03e0a101a8c68a359a3b36f37cd2cbf2-233127985");
         }
 
-        [HttpGet("listaDeItems")]
+        [HttpGet("me")]
         public async Task<IActionResult> ObtenerListaDeItemsPorUsuario()
         {
             try
             {
                 // Endpoint para obtener la lista de ítems del usuario
-                string endpoint = $"https://api.mercadolibre.com/users/233127985/items/search";
+                string endpoint = $"https://api.mercadolibre.com/users/me";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
@@ -57,7 +57,7 @@ namespace meliApi.Controllers
             try
             {
                 // Endpoint para obtener especificaciones de un ítem específico
-                string endpoint = $"https://api.mercadolibre.com/items/MLA850821971";
+                string endpoint = $"https://api.mercadolibre.com/items/MLA1423103713";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
@@ -88,7 +88,7 @@ namespace meliApi.Controllers
             try
             {
                 // Endpoint para obtener especificaciones de varios ítems específicos
-                string endpoint = $"https://api.mercadolibre.com/items?ids=MLA850821971,MLA851221877";
+                string endpoint = $"https://api.mercadolibre.com/items?ids=MLA1423103713,MLA879778758,MLA879778265,MLA879777318";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);

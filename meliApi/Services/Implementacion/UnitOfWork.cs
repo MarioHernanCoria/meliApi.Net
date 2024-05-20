@@ -6,11 +6,11 @@ namespace meliApi.Services.Implementacion
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly AppDbContext _context;
+        private readonly MySqlDbContext _context;
         public UsuarioRepository UsuarioRepository { get; set; }
 
 
-        public UnitOfWork(AppDbContext context)
+        public UnitOfWork(MySqlDbContext context)
         {
             _context = context;
 

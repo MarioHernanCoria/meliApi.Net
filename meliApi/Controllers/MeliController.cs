@@ -1,6 +1,5 @@
 ﻿using meliApi.Data;
 using meliApi.Entidades;
-using meliApi.Servicios;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -11,21 +10,20 @@ namespace meliApi.Controllers
     [ApiController]
     public class MeliController : ControllerBase
     {
-        private readonly MeliTokenServicio _meliTokenService;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _httpClient;
-        private readonly AppDbContext _db;
+        private readonly MySqlDbContext _db;
         private string requestBody;
 
-        public MeliController(MeliTokenServicio meliTokenService, IHttpClientFactory httpClientFactory, AppDbContext db, HttpClient httpClient)
+        public MeliController(IHttpClientFactory httpClientFactory, MySqlDbContext db, HttpClient httpClient)
         {
-            _meliTokenService = meliTokenService;
             _httpClientFactory = httpClientFactory;
             _db = db;
             _httpClient = httpClient;
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-051204-54755567add5497d0d03959f559ccab2-233127985");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-051904-03e0a101a8c68a359a3b36f37cd2cbf2-233127985");
         }
 
+        [ProducesResponseType(typeof(TokenData), StatusCodes.Status200OK)]
         [HttpGet("ObetenerToken")]
         public async Task<IActionResult> AuthorizationCallback(string code)
         {
@@ -208,7 +206,7 @@ namespace meliApi.Controllers
 
 
         [HttpGet("items/especificaciones")]
-        public async Task<IActionResult> ObtenerEspecificacionesDeItems([FromQuery] string ids, [FromQuery] string attributes)
+        public async Task<IActionResult> ObtenerEspecificacionesDeItems([FromQuery] string MLA1423103713, [FromQuery] string atributos)
         {
                 //Especificaciones de varios ítems y con atributos específicos:
                 //https://api.mercadolibre.com/items?ids=$ITEM_ID1,$ITEM_ID2&attributes=$ATTRIBUTE1,$ATTRIBUTE2,$ATTRIBUTE3
@@ -216,7 +214,7 @@ namespace meliApi.Controllers
             try
             {
                 // Endpoint para obtener especificaciones de varios ítems con atributos específicos
-                string endpoint = $"https://api.mercadolibre.com/items?ids={ids}&attributes={attributes}";
+                string endpoint = $"https://api.mercadolibre.com/items?ids={MLA1423103713}&attributes={atributos}";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
@@ -241,8 +239,8 @@ namespace meliApi.Controllers
             }
         }
 
-        [HttpGet("items/{itemId}/descripcion")]
-        public async Task<IActionResult> ObtenerDescripcionDeItem(string itemId)
+        [HttpGet("items/descripcion")]
+        public async Task<IActionResult> ObtenerDescripcionDeItem(string MLA1423103713)
         {
 
             //Obtener la descripción del ítem:
@@ -251,7 +249,7 @@ namespace meliApi.Controllers
             try
             {
                 // Endpoint para obtener la descripción de un ítem específico
-                string endpoint = $"https://api.mercadolibre.com/items/{itemId}/description";
+                string endpoint = $"https://api.mercadolibre.com/items/{MLA1423103713}/description";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
@@ -310,8 +308,8 @@ namespace meliApi.Controllers
             }
         }
 
-        [HttpGet("categorias/{categoryId}/atributos")]
-        public async Task<IActionResult> ObtenerAtributosDeCategoria(string categoryId)
+        [HttpGet("categorias/atributos")]
+        public async Task<IActionResult> ObtenerAtributosDeCategoria(string MLA1744)
         {
             //Obtener atributos de una categoría
             //Son todos los atributos que posee una categoría específica.
@@ -320,7 +318,7 @@ namespace meliApi.Controllers
             try
             {
                 // Endpoint para obtener los atributos de una categoría específica
-                string endpoint = $"https://api.mercadolibre.com/categories/{categoryId}/attributes";
+                string endpoint = $"https://api.mercadolibre.com/categories/{MLA1744}/attributes";
 
                 // Realizar la solicitud GET al endpoint
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);

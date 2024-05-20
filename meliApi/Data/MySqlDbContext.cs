@@ -1,12 +1,12 @@
-﻿using meliApi.Entidades;
-using meliApi.Entidades.meliApi.Entidades;
+﻿using meliApi.Entidades.meliApi.Entidades;
+using meliApi.Entidades;
 using Microsoft.EntityFrameworkCore;
 
 namespace meliApi.Data
 {
-    public class AppDbContext : DbContext
+    public class MySqlDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        public MySqlDbContext(DbContextOptions<MySqlDbContext> options) : base(options)
         {
 
         }
