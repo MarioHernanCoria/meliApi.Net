@@ -1,27 +1,41 @@
-﻿using meliApi.DTOs;
-using System.Net;
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace meliApi.Entidades
 {
-    using System.ComponentModel.DataAnnotations;
-
-    namespace meliApi.Entidades
+    public class Usuario
     {
-        public class Usuario
-        {
-            [Key]
-            public int Id { get; set; }
-            public string? Nickname { get; set; }
-            public string? CountryId { get; set; }
-            public string? Address { get; set; }
-            public string? UserType { get; set; }
-            public string? SiteId { get; set; }
-            public string? Permalink { get; set; }
-            public string? SellerReputation { get; set; }
-            public string? Status { get; set; }
-        }
+        public long Id { get; set; }
+        public string Nickname { get; set; }
+        public string Country_Id { get; set; }
+        public Address Address { get; set; }
+        public string User_Type { get; set; }
+        public string Site_Id { get; set; }
+        public string Permalink { get; set; }
+        public SellerReputation Seller_Reputation { get; set; }
+        public Status Status { get; set; }
     }
 
+    public class Address
+    {
+        public string City { get; set; }
+        public string State { get; set; }
+    }
+
+    public class SellerReputation
+    {
+        public object Level_Id { get; set; }
+        public object Power_Seller_Status { get; set; }
+        public Transactions Transactions { get; set; }
+    }
+
+    public class Transactions
+    {
+        public string Period { get; set; }
+        public int Total { get; set; }
+    }
+
+    public class Status
+    {
+        public string Site_Status { get; set; }
+    }
 }

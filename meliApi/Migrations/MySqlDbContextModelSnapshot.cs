@@ -59,43 +59,6 @@ namespace meliApi.Migrations
 
                     b.ToTable("Token");
                 });
-
-            modelBuilder.Entity("meliApi.Entidades.meliApi.Entidades.Usuario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("CountryId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Nickname")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Permalink")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("SellerReputation")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("SiteId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("UserType")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Usuarios");
-                });
 #pragma warning restore 612, 618
         }
     }

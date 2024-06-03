@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using meliApi.Data;
+using meliApi.Servicios;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace meliApi.Controllers
 {
@@ -7,90 +9,69 @@ namespace meliApi.Controllers
     [ApiController]
     public class TokenController : ControllerBase
     {
-        //private readonly MeliService _meliService;
+        private readonly TokenServicios _tokenServicios;
+        private readonly MySqlDbContext _db;
+        private readonly ILogger<TokenController> _logger;
 
-        //public TokenController(MeliService meliService)
-        //{
-        //    _meliService = meliService;
-        //}
+        public TokenController(TokenServicios tokenServicios, MySqlDbContext db, ILogger<TokenController> logger)
+        {
+            _tokenServicios = tokenServicios;
+            _db = db;
+            _logger = logger;
+        }
 
-        //[HttpPost("getCodeUrl")]
-        //public async Task<IActionResult> GetCodeUrl()
-        //{
-        //    var key = await _meliService.GetCodeUrl();
-        //    return StatusCode(201, key);
-        //}
+        [ProducesResponseType(typeof(TokenData), StatusCodes.Status200OK)]
+        [HttpGet("ObtenerToken")]
+        public async Task<IActionResult> Token(string code)
+        {
+            try
+            {
+                var tokenData = await _tokenServicios.ObtenerToken(code);
 
-        //[HttpPost("getToken")]
-        //public async Task<IActionResult> GetToken([FromBody] YourRequestBodyModel body)
-        //{
-        //    var data = await _meliService.GetToken(body.Code);
-        //    return Ok(data);
-        //}
+                // Renovar el token si es necesario
+                await RenewTokenIfNeeded(tokenData);
 
-        //[HttpPost("refreshToken")]
-        //public async Task<IActionResult> RefreshToken([FromBody] YourRequestBodyModel body)
-        //{
-        //    var data = await _meliService.RefreshToken(body.Token);
-        //    return Ok(data);
-        //}
+                return Ok(tokenData);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError($"Error de comunicación con el servidor de Mercado Libre: {ex.Message}");
+                return BadRequest($"Error de comunicación con el servidor de Mercado Libre: {ex.Message}");
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError($"Error al procesar la respuesta JSON: {ex.Message}");
+                return BadRequest($"Error al procesar la respuesta JSON: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error interno del servidor: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error interno del servidor: {ex.Message}");
+            }
+        }
 
-        //[HttpPost("meliHooks")]
-        //public async Task<IActionResult> MeliHooks([FromBody] YourRequestBodyModel body)
-        //{
-        //    var data = await _meliService.ProcessEvent(body);
-        //    return Ok(data);
-        //}
 
-        //[HttpPost("getServices")]
-        //public async Task<IActionResult> GetServices([FromBody] YourRequestBodyModel body)
-        //{
-        //    var data = await _meliService.GetServices(body);
-        //    return Ok(data);
-        //}
+        private async Task RenewTokenIfNeeded(TokenData token)
+        {
+            var expirationDate = DateTime.UtcNow.AddSeconds(token.expires_in);
+            var timeUntilExpiration = expirationDate - DateTime.UtcNow;
 
-        //[HttpPost("addService")]
-        //public async Task<IActionResult> AddService([FromBody] YourRequestBodyModel body)
-        //{
-        //    var data = await _meliService.AddService(body);
-        //    return Ok(data);
-        //}
+            // Renovar el token si está a punto de expirar (por ejemplo, 5 minutos antes)
+            if (timeUntilExpiration <= TimeSpan.FromMinutes(5))
+            {
+                // Utilizar el refresh token para obtener un nuevo token
+                var newToken = await _tokenServicios.RenewToken(token.refresh_token);
 
-        //[HttpGet("getUser/{userId}")]
-        //public async Task<IActionResult> GetUser(string userId)
-        //{
-        //    var data = await _meliService.GetUser(userId);
-        //    return Ok(data);
-        //}
+                // Actualizar el token en la base de datos
+                token.access_token = newToken.access_token;
+                token.expires_in = newToken.expires_in;
+                token.token_type = newToken.token_type;
 
-        //[HttpGet("getProducts/{userId}")]
-        //public async Task<IActionResult> GetProducts(string userId)
-        //{
-        //    var data = await _meliService.GetProducts(userId);
-        //    return Ok(data);
-        //}
+                // Actualizar la fecha de expiración
+                token.ExpirationDate = DateTime.UtcNow.AddSeconds(newToken.expires_in);
 
-        //[HttpGet("getUsers")]
-        //public async Task<IActionResult> GetUsers([FromQuery] YourQueryParamsModel queryParams)
-        //{
-        //    var filter = queryParams.Name != null ? new Dictionary<string, string> { { "name", queryParams.Name } } : null;
-        //    var options = queryParams.SortBy != null ? new Dictionary<string, string> { { "sortBy", queryParams.SortBy }, { "limit", queryParams.Limit }, { "page", queryParams.Page } } : null;
-        //    var result = await _userService.QueryUsers(filter, options);
-        //    return Ok(result);
-        //}
-
-        //[HttpPut("updateUser/{userId}")]
-        //public async Task<IActionResult> UpdateUser(string userId, [FromBody] YourUpdateUserModel updateUserModel)
-        //{
-        //    var user = await _userService.UpdateUserById(userId, updateUserModel);
-        //    return Ok(user);
-        //}
-
-        //[HttpDelete("deleteUser/{userId}")]
-        //public async Task<IActionResult> DeleteUser(string userId)
-        //{
-        //    await _userService.DeleteUserById(userId);
-        //    return NoContent();
-        //}
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }

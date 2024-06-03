@@ -1,8 +1,8 @@
 using meliApi.Data;
-using meliApi.Services.Implementacion;
-using meliApi.Services.Interfaces;
+using meliApi.Servicios;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace meliApi
 {
@@ -17,6 +17,22 @@ namespace meliApi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddHttpClient();
+            builder.Services.AddScoped<UsuarioServicio>();
+            builder.Services.AddScoped<TokenServicios>();
+
+            // Configuración de autenticación JWT
+            builder.Services.AddAuthentication("Bearer")
+                .AddJwtBearer("Bearer", options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(""))
+                    };
+                });
 
             // Configuración del DbContext de MySQL
             builder.Services.AddDbContext<MySqlDbContext>(options =>
@@ -24,7 +40,6 @@ namespace meliApi
                 options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                                  new MySqlServerVersion(new Version(8, 0, 21)));
             });
-
 
             builder.Services.AddCors(options =>
             {
@@ -37,8 +52,6 @@ namespace meliApi
                     });
             });
 
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -49,6 +62,7 @@ namespace meliApi
             }
 
             app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseCors("AllowSpecificOrigin");
             app.MapControllers();
