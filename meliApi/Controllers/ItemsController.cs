@@ -15,7 +15,7 @@ namespace meliApi.Controllers
         public ItemsController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-060520-6bd078564e177e6cd9ca147d056a6d9d-233127985");
         }
 
         [HttpGet("me")]
@@ -94,59 +94,6 @@ namespace meliApi.Controllers
             }
         }
 
-        [HttpPost("catalogo/modelos-recomendados")]
-        public async Task<IActionResult> ObtenerModelosRecomendados()
-        {
-            //Obtener Modelo recomendado según categoría
-            //Primero se ejecuta un POST sin BODY.Esto permite traer los valores más usados para el atributo informado.
-            //curl - X POST https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/BRAND/top_values
-
-            try
-            {
-                string endpoint = $"https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/MODEL/top_values";
-
-                HttpResponseMessage response = await _httpClient.PostAsync(endpoint, null);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
-            }
-        }
-
-        [HttpPost("catalogo/combinar-atributos")]
-        public async Task<IActionResult> CombinarAtributos()
-        {
-            try
-            {
-                string endpoint = "https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/TRIM/top_values";
-
-                HttpResponseMessage response = await _httpClient.PostAsync(endpoint, null);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
-            }
-        }
 
 
     }
