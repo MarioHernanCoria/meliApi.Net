@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using meliApi.Servicios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace meliApi.Controllers
@@ -11,11 +12,26 @@ namespace meliApi.Controllers
     public class ItemsController : ControllerBase
     {
         private readonly HttpClient _httpClient;
+        private readonly TokenServicios _tokenServicios;
 
-        public ItemsController(IHttpClientFactory httpClientFactory)
+        public ItemsController(IHttpClientFactory httpClientFactory, TokenServicios tokenServicios)
         {
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-060520-6bd078564e177e6cd9ca147d056a6d9d-233127985");
+            _tokenServicios = tokenServicios;
+        }
+
+
+        private async Task SetAuthorizationHeaderAsync()
+        {
+            var tokenData = await _tokenServicios.ObtenerUltimoToken();
+            if (tokenData != null)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+            }
+            else
+            {
+                throw new InvalidOperationException("No se pudo obtener un token válido.");
+            }
         }
 
         [HttpGet("me")]
@@ -23,8 +39,10 @@ namespace meliApi.Controllers
         {
             try
             {
-                string endpoint = $"https://api.mercadolibre.com/users/me";
 
+                await SetAuthorizationHeaderAsync();
+
+                string endpoint = $"https://api.mercadolibre.com/users/me";
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
 
                 if (response.IsSuccessStatusCode)
@@ -50,6 +68,7 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
                 string endpoint = $"https://api.mercadolibre.com/items/MLA1423103713";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
@@ -75,6 +94,8 @@ namespace meliApi.Controllers
         {
             try
             {
+
+                await SetAuthorizationHeaderAsync();
                 string endpoint = $"https://api.mercadolibre.com/items?ids=MLA1423103713,MLA879778758,MLA879778265,MLA879777318";
                 HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
 

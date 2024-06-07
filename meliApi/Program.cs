@@ -1,4 +1,6 @@
 using meliApi.Data;
+using meliApi.Data.Repositories.Implementacion;
+using meliApi.Data.Repositories.Interface;
 using meliApi.Servicios;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -19,6 +21,7 @@ namespace meliApi
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<UsuarioServicio>();
             builder.Services.AddScoped<TokenServicios>();
+            builder.Services.AddScoped<IProductosCollection, ProductoCollection>();
 
             // Configuración de autenticación JWT
             builder.Services.AddAuthentication("Bearer")

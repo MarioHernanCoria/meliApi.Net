@@ -1,5 +1,7 @@
 ﻿using meliApi.Data;
+using meliApi.Data.Repositories.Interface;
 using meliApi.Entidades;
+using meliApi.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
@@ -14,14 +16,31 @@ namespace meliApi.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _httpClient;
         private readonly MySqlDbContext _db;
+        private readonly TokenServicios _tokenServicios;
+        private readonly IProductosCollection _productoCollection;
 
-        public MeliController(IHttpClientFactory httpClientFactory, MySqlDbContext db, HttpClient httpClient)
+        public MeliController(IHttpClientFactory httpClientFactory, MySqlDbContext db, HttpClient httpClient, TokenServicios tokenServicios, IProductosCollection productosCollection)
         {
             _httpClientFactory = httpClientFactory;
             _db = db;
             _httpClient = httpClient;
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-060520-6bd078564e177e6cd9ca147d056a6d9d-233127985");
+            _tokenServicios = tokenServicios;
+            _productoCollection = productosCollection;
         }
+
+        private async Task SetAuthorizationHeaderAsync()
+        {
+            var tokenData = await _tokenServicios.ObtenerUltimoToken();
+            if (tokenData != null)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+            }
+            else
+            {
+                throw new InvalidOperationException("No se pudo obtener un token válido.");
+            }
+        }
+
 
         [HttpGet("items/ItemsPorUsuario")]
         public async Task<IActionResult> ObtenerEspecificacionesDeItems(int userId)
@@ -29,6 +48,8 @@ namespace meliApi.Controllers
             
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 // Endpoint para obtener especificaciones de varios ítems con atributos específicos
                 string endpoint = $"https://api.mercadolibre.com/users/{userId}/items/search";
 
@@ -62,6 +83,9 @@ namespace meliApi.Controllers
 
             try
             {
+                await SetAuthorizationHeaderAsync();
+
+
                 // Endpoint para obtener especificaciones de varios ítems con atributos específicos
                 string endpoint = $"https://api.mercadolibre.com/items/{itemId}";
 
@@ -73,7 +97,11 @@ namespace meliApi.Controllers
                 {
                     // Leer y devolver la respuesta como una cadena JSON
                     string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
+                    Producto producto = Newtonsoft.Json.JsonConvert.DeserializeObject<Producto>(json);
+
+                    await _productoCollection.InsertProducto(producto);
+
+                    return Ok(producto);
                 }
                 else
                 {
@@ -95,6 +123,8 @@ namespace meliApi.Controllers
 
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 // Endpoint para obtener la descripción de un ítem específico
                 string endpoint = $"https://api.mercadolibre.com/items/{itemId}/description";
 
@@ -127,7 +157,7 @@ namespace meliApi.Controllers
         {
             try
             {
-
+                await SetAuthorizationHeaderAsync();
 
                 // Endpoint para obtener especificaciones de varios ítems con atributos específicos
                 string endpoint = $"https://api.mercadolibre.com/items?ids={itemIds}";
@@ -164,6 +194,8 @@ namespace meliApi.Controllers
             //https://api.mercadolibre.com/items?ids=MLA1423103713&attributes=title,price,currency_id,condition
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 // Endpoint para obtener especificaciones de varios ítems con atributos específicos
                 string endpoint = $"https://api.mercadolibre.com/items?ids={MLA1423103713}&attributes={atributos}";
 

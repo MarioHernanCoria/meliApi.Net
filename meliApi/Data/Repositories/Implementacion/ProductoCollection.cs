@@ -19,7 +19,8 @@ namespace meliApi.Data.Repositories.Implementacion
 
         public async Task DeleteProducto(string id)
         {
-            var filter = Builders<Producto>.Filter.Eq(s => s.Id, new ObjectId(id));
+            var filter = Builders<Producto>.Filter.Eq(s => s.Id.ToString(), id);
+
             await Collection.DeleteOneAsync(filter);
         }
 

@@ -2,6 +2,7 @@
 using meliApi.Data.Repositories.Implementacion;
 using meliApi.Data.Repositories.Interface;
 using meliApi.Entidades;
+using meliApi.Servicios;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -16,66 +17,35 @@ namespace meliApi.Controllers
         private IProductosCollection db = new ProductoCollection();
         private readonly HttpClient _httpClient;
         private readonly IHttpClientFactory _clientFactory;
+        private readonly TokenServicios _tokenServicios;
 
-        public ProductoController(IHttpClientFactory httpClientFactory)
+        public ProductoController(IHttpClientFactory httpClientFactory, TokenServicios tokenServicios)
         {
-            _clientFactory = httpClientFactory;
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "APP_USR-86626730255656-060520-6bd078564e177e6cd9ca147d056a6d9d-233127985");
+            _tokenServicios = tokenServicios;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllProcuctos()
+        private async Task SetAuthorizationHeaderAsync()
         {
-            return Ok(await db.GetAll());
+            var tokenData = await _tokenServicios.ObtenerUltimoToken();
+            if (tokenData != null)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+            }
+            else
+            {
+                throw new InvalidOperationException("No se pudo obtener un token válido.");
+            }
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProducto(string id)
-        {
-            return Ok(await db.GetProductoById(id));
-        }
-
-
-        [HttpPost]
-        public async Task<IActionResult> CreateProducto([FromBody] Producto producto)
-        {
-            if (producto == null)
-            {
-                return BadRequest();
-            }
-
-            if (producto.Name == string.Empty)
-            {
-                ModelState.AddModelError("Name", "El producto esta vacio");
-            }
-
-            await db.InsertProducto(producto);
-            return Created("Created", true);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProducto([FromBody] Producto producto, string id)
-        {
-            if (producto == null)
-            {
-                return BadRequest();
-            }
-
-            if (producto.Name == string.Empty)
-            {
-                ModelState.AddModelError("Name", "El producto esta vacio");
-            }
-            producto.Id = new MongoDB.Bson.ObjectId(id);
-            await db.UpdateProducto(producto);
-            return Created("Created", true);
-        }
 
         [HttpPost("brand")]
         public async Task<IActionResult> ObtenerBrand()
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 string endpoint = $"https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/BRAND/top_values";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(endpoint, null);
@@ -102,6 +72,8 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 var requestBody = new
                 {
                     known_attributes = new[]
@@ -147,6 +119,8 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 // Construir el cuerpo de la solicitud con el ID de la marca y modelo proporcionados
                 var requestBody = new
                 {
@@ -197,6 +171,7 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
                 // Verificar si los identificadores necesarios están presentes en la solicitud
                 if (string.IsNullOrEmpty(request.MarcaId) || string.IsNullOrEmpty(request.ModeloId) || string.IsNullOrEmpty(request.YearId))
                 {
@@ -259,6 +234,8 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 string endpoint = "https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/TRIM/top_values";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(endpoint, null);

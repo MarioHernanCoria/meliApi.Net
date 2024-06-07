@@ -12,10 +12,7 @@ namespace meliApi.Data.Repositories
         {
             client = new MongoClient("mongodb://localhost:27017/");
 
-            db = client.GetDatabase("Productos");
-            db = client.GetDatabase("Item");
-            db = client.GetDatabase("ItemPrices");
-            db = client.GetDatabase("Message");
+            db = client.GetDatabase("Producto");
         }
     }
 }

@@ -4,6 +4,8 @@ using meliApi.Data;
 using meliApi.Entidades;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Specialized;
+using System.Web;
 
 namespace meliApi.Servicios
 {
@@ -20,8 +22,16 @@ namespace meliApi.Servicios
             _configuration = configuration;
         }
 
-        public async Task<TokenData> ObtenerToken(string code)
+        public async Task<TokenData> ObtenerToken(string url)
         {
+
+            Uri uri = new Uri(url);
+
+            NameValueCollection queryParameters = HttpUtility.ParseQueryString(uri.Query);
+
+            string code = queryParameters["code"];
+
+
             if (string.IsNullOrEmpty(code))
             {
                 throw new ArgumentException("El código de autorización no fue proporcionado.");
@@ -128,6 +138,26 @@ namespace meliApi.Servicios
                 var errorResponse = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Error al renovar el token de Mercado Libre. Estado de respuesta: {response.StatusCode}, Detalles: {errorResponse}");
             }
+        }
+
+        public async Task<TokenData> ObtenerUltimoToken()
+        {
+            var ultimoToken = await _db.Token.OrderByDescending(t => t.ExpirationDate).FirstOrDefaultAsync();
+            if (ultimoToken == null)
+            {
+                return null;
+            }
+
+            return new TokenData
+            {
+                access_token = ultimoToken.AccessToken,
+                token_type = ultimoToken.TokenType,
+                expires_in = (int)(ultimoToken.ExpirationDate - DateTime.UtcNow).TotalSeconds,
+                scope = ultimoToken.Scope,
+                user_id = ultimoToken.UsuarioId,
+                refresh_token = ultimoToken.RefreshToken,
+                ExpirationDate = ultimoToken.ExpirationDate
+            };
         }
     }
     public class TokenData

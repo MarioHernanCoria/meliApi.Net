@@ -15,11 +15,27 @@ namespace meliApi.Controllers
         private readonly UsuarioServicio _usuarioServicio;
         private readonly MySqlDbContext _db;
         private readonly HttpClient _httpClient;
-        public UsuarioController(UsuarioServicio usuarioServicio, MySqlDbContext db, IHttpClientFactory httpClientFactory)
+        private readonly TokenServicios _tokenServicios;
+        public UsuarioController(UsuarioServicio usuarioServicio, MySqlDbContext db, IHttpClientFactory httpClientFactory, TokenServicios tokenServicios)
         {
             _db = db;
             _usuarioServicio = usuarioServicio;
             _httpClient = httpClientFactory.CreateClient();
+            _tokenServicios = tokenServicios;
+        }
+
+
+        private async Task SetAuthorizationHeaderAsync()
+        {
+            var tokenData = await _tokenServicios.ObtenerUltimoToken();
+            if (tokenData != null)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+            }
+            else
+            {
+                throw new InvalidOperationException("No se pudo obtener un token válido.");
+            }
         }
 
         [HttpGet]
@@ -29,6 +45,9 @@ namespace meliApi.Controllers
 
             try
             {
+                await SetAuthorizationHeaderAsync();
+
+
                 var usuario = await _usuarioServicio.ObtenerUsuario(usuarioId);
 
                 if (usuario == null)
@@ -53,6 +72,8 @@ namespace meliApi.Controllers
 
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 var usuario = await _usuarioServicio.AppAutorizadaUsuario(usuarioId);
 
                 if (usuario == null)
@@ -74,6 +95,8 @@ namespace meliApi.Controllers
         {
             try
             {
+                await SetAuthorizationHeaderAsync();
+
                 // Endpoint para obtener datos públicos del vendedor
                 string endpoint = $"https://api.mercadolibre.com/sites/MLA/search?seller_id=233127985";
 
