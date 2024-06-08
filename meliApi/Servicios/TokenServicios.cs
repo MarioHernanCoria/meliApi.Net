@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Specialized;
 using System.Web;
+using Newtonsoft.Json.Linq;
 
 namespace meliApi.Servicios
 {
@@ -80,9 +81,10 @@ namespace meliApi.Servicios
                     Scope = tokenData.scope,
                     UsuarioId = tokenData.user_id,
                     RefreshToken = tokenData.refresh_token,
-                    ExpirationDate = DateTime.UtcNow.AddSeconds(tokenData.expires_in)
-                };
+                    ExpirationDate = DateTime.Now.AddSeconds(tokenData.expires_in).AddMilliseconds(-DateTime.Now.Millisecond)
 
+                };
+                token.ExpirationDate.AddMilliseconds(0);
                 // Guardar el token en la base de datos
                 _db.Token.Add(token);
                 await _db.SaveChangesAsync();
@@ -131,6 +133,21 @@ namespace meliApi.Servicios
                     throw new HttpRequestException("Error al deserializar la respuesta del token.");
                 }
 
+                // Guardar el token en la base de datos
+                var newtoken = new Token
+                {
+                    AccessToken = tokenData.access_token,
+                    TokenType = tokenData.token_type,
+                    ExpiresIn = tokenData.expires_in,
+                    Scope = tokenData.scope,
+                    UsuarioId = tokenData.user_id,
+                    RefreshToken = tokenData.refresh_token,
+                    ExpirationDate = DateTime.Now.AddSeconds(tokenData.expires_in).AddMilliseconds(-DateTime.Now.Millisecond)
+                };
+
+                _db.Token.Add(newtoken);
+                await _db.SaveChangesAsync();
+
                 return tokenData;
             }
             else
@@ -142,22 +159,54 @@ namespace meliApi.Servicios
 
         public async Task<TokenData> ObtenerUltimoToken()
         {
+
             var ultimoToken = await _db.Token.OrderByDescending(t => t.ExpirationDate).FirstOrDefaultAsync();
             if (ultimoToken == null)
             {
                 return null;
             }
 
+            DateTime expirationDate = DateTime.Parse(ultimoToken.ExpirationDate.ToString());
+
+            
             return new TokenData
             {
                 access_token = ultimoToken.AccessToken,
                 token_type = ultimoToken.TokenType,
-                expires_in = (int)(ultimoToken.ExpirationDate - DateTime.UtcNow).TotalSeconds,
+                expires_in = (int)(expirationDate - DateTime.Now).TotalSeconds,
                 scope = ultimoToken.Scope,
                 user_id = ultimoToken.UsuarioId,
                 refresh_token = ultimoToken.RefreshToken,
-                ExpirationDate = ultimoToken.ExpirationDate
+                ExpirationDate = expirationDate
             };
+        }
+
+
+        public async Task RefreshToken(TokenData token)
+        {
+
+            var date = _db.Token.Max(s => s.ExpirationDate);
+            DateTime expirationDate = Convert.ToDateTime(date);
+            var timeUntilExpiration = expirationDate - DateTime.Now;
+
+            // Renovar el token si está a punto de expirar (por ejemplo, 5 minutos antes)
+            if (timeUntilExpiration > TimeSpan.FromHours(5))
+            {
+                // Utilizar el refresh token para obtener un nuevo token
+                var newToken = await RenewToken(token.refresh_token);
+
+
+                // Actualizar el token en la base de datos
+                token.access_token = newToken.access_token;
+                token.expires_in = newToken.expires_in;
+                token.token_type = newToken.token_type;
+
+                // Actualizar la fecha de expiración
+                token.ExpirationDate = DateTime.Now.AddSeconds(newToken.expires_in);
+
+                await _db.SaveChangesAsync();
+            }
+
         }
     }
     public class TokenData

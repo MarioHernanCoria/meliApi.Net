@@ -1,5 +1,6 @@
 ﻿using meliApi.Entidades.meliApi.Entidades;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace meliApi.Entidades
 {
@@ -13,6 +14,7 @@ namespace meliApi.Entidades
         public string Scope { get; set; }
         public int ExpiresIn { get; set; }
         public string TokenType { get; set; }
+        [Column(TypeName = "datetime")]
         public DateTime ExpirationDate { get; set; }
     }
 }

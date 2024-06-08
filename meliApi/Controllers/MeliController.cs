@@ -2,8 +2,10 @@
 using meliApi.Data.Repositories.Interface;
 using meliApi.Entidades;
 using meliApi.Servicios;
+using meliApi.Servicios.Items;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -18,60 +20,30 @@ namespace meliApi.Controllers
         private readonly MySqlDbContext _db;
         private readonly TokenServicios _tokenServicios;
         private readonly IProductosCollection _productoCollection;
+        private readonly IItemService _itemService;
 
-        public MeliController(IHttpClientFactory httpClientFactory, MySqlDbContext db, HttpClient httpClient, TokenServicios tokenServicios, IProductosCollection productosCollection)
+        public MeliController(IHttpClientFactory httpClientFactory, MySqlDbContext db, HttpClient httpClient, TokenServicios tokenServicios, IProductosCollection productosCollection, IItemService itemService)
         {
             _httpClientFactory = httpClientFactory;
             _db = db;
             _httpClient = httpClient;
             _tokenServicios = tokenServicios;
             _productoCollection = productosCollection;
+            _itemService = itemService;
         }
 
-        private async Task SetAuthorizationHeaderAsync()
-        {
-            var tokenData = await _tokenServicios.ObtenerUltimoToken();
-            if (tokenData != null)
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
-            }
-            else
-            {
-                throw new InvalidOperationException("No se pudo obtener un token válido.");
-            }
-        }
 
 
         [HttpGet("items/ItemsPorUsuario")]
-        public async Task<IActionResult> ObtenerEspecificacionesDeItems(int userId)
+        public async Task<IActionResult> ItemsPorUsuario(int userId)
         {
-            
             try
             {
-                await SetAuthorizationHeaderAsync();
-
-                // Endpoint para obtener especificaciones de varios ítems con atributos específicos
-                string endpoint = $"https://api.mercadolibre.com/users/{userId}/items/search";
-
-                // Realizar la solicitud GET al endpoint
-                HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-
-                // Verificar si la solicitud fue exitosa
-                if (response.IsSuccessStatusCode)
-                {
-                    // Leer y devolver la respuesta como una cadena JSON
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    // Si la solicitud no fue exitosa, devolver un error
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
+                List<string> items = await _itemService.GetItemsByUserIdAsync(userId);
+                return Ok(items);
             }
             catch (HttpRequestException ex)
             {
-                // Manejar errores de solicitud HTTP
                 return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
             }
         }
@@ -80,38 +52,13 @@ namespace meliApi.Controllers
         [HttpGet("items/EspecificacionesPorItem")]
         public async Task<IActionResult> ObtenerEspecificacionesPorItems(string itemId)
         {
-
             try
             {
-                await SetAuthorizationHeaderAsync();
-
-
-                // Endpoint para obtener especificaciones de varios ítems con atributos específicos
-                string endpoint = $"https://api.mercadolibre.com/items/{itemId}";
-
-                // Realizar la solicitud GET al endpoint
-                HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-
-                // Verificar si la solicitud fue exitosa
-                if (response.IsSuccessStatusCode)
-                {
-                    // Leer y devolver la respuesta como una cadena JSON
-                    string json = await response.Content.ReadAsStringAsync();
-                    Producto producto = Newtonsoft.Json.JsonConvert.DeserializeObject<Producto>(json);
-
-                    await _productoCollection.InsertProducto(producto);
-
-                    return Ok(producto);
-                }
-                else
-                {
-                    // Si la solicitud no fue exitosa, devolver un error
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
+                var item = await _itemService.GetItemSpecificationsAsync(itemId);
+                return Ok(item);
             }
             catch (HttpRequestException ex)
             {
-                // Manejar errores de solicitud HTTP
                 return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
             }
         }
@@ -120,67 +67,28 @@ namespace meliApi.Controllers
         [HttpGet("items/descripcion")]
         public async Task<IActionResult> ObtenerDescripcionDeItem(string itemId)
         {
-
             try
             {
-                await SetAuthorizationHeaderAsync();
-
-                // Endpoint para obtener la descripción de un ítem específico
-                string endpoint = $"https://api.mercadolibre.com/items/{itemId}/description";
-
-                // Realizar la solicitud GET al endpoint
-                HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-
-                // Verificar si la solicitud fue exitosa
-                if (response.IsSuccessStatusCode)
-                {
-                    // Leer y devolver la respuesta como una cadena JSON
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    // Si la solicitud no fue exitosa, devolver un error
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
+                var description = await _itemService.GetItemDescriptionAsync(itemId);
+                return Ok(description);
             }
             catch (HttpRequestException ex)
             {
-                // Manejar errores de solicitud HTTP
                 return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
             }
         }
 
 
         [HttpGet("items/especificaciones")]
-        public async Task<IActionResult> ObtenerEspecificacionesDeItems([FromQuery]string itemIds)
+        public async Task<IActionResult> ObtenerEspecificacionesDeItems([FromQuery] string itemIds)
         {
             try
             {
-                await SetAuthorizationHeaderAsync();
-
-                // Endpoint para obtener especificaciones de varios ítems con atributos específicos
-                string endpoint = $"https://api.mercadolibre.com/items?ids={itemIds}";
-
-                // Realizar la solicitud GET al endpoint
-                HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-
-                // Verificar si la solicitud fue exitosa
-                if (response.IsSuccessStatusCode)
-                {
-                    // Leer y devolver la respuesta como una cadena JSON
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    // Si la solicitud no fue exitosa, devolver un error
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
+                var specifications = await _itemService.GetMultipleItemSpecificationsAsync(itemIds);
+                return Ok(specifications);
             }
             catch (HttpRequestException ex)
             {
-                // Manejar errores de solicitud HTTP
                 return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
             }
         }
@@ -189,37 +97,31 @@ namespace meliApi.Controllers
         [HttpGet("items/especificacionesYAtributos")]
         public async Task<IActionResult> ObtenerEspecificacionesDeItems([FromQuery] string MLA1423103713, [FromQuery] string atributos)
         {
-            //Especificaciones de varios ítems y con atributos específicos:
-            //https://api.mercadolibre.com/items?ids=$ITEM_ID1,$ITEM_ID2&attributes=$ATTRIBUTE1,$ATTRIBUTE2,$ATTRIBUTE3
-            //https://api.mercadolibre.com/items?ids=MLA1423103713&attributes=title,price,currency_id,condition
             try
             {
-                await SetAuthorizationHeaderAsync();
-
-                // Endpoint para obtener especificaciones de varios ítems con atributos específicos
-                string endpoint = $"https://api.mercadolibre.com/items?ids={MLA1423103713}&attributes={atributos}";
-
-                // Realizar la solicitud GET al endpoint
-                HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-
-                // Verificar si la solicitud fue exitosa
-                if (response.IsSuccessStatusCode)
-                {
-                    // Leer y devolver la respuesta como una cadena JSON
-                    string json = await response.Content.ReadAsStringAsync();
-                    return Ok(json);
-                }
-                else
-                {
-                    // Si la solicitud no fue exitosa, devolver un error
-                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
-                }
+                var specifications = await _itemService.GetItemSpecificationsWithAttributesAsync(MLA1423103713, atributos);
+                return Ok(specifications);
             }
             catch (HttpRequestException ex)
             {
-                // Manejar errores de solicitud HTTP
                 return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
             }
+        }
+
+
+        public class ApiResponse
+        {
+            public string seller_id { get; set; }
+            public List<string> results { get; set; }
+            public Paging paging { get; set; }
+            // Define otras propiedades según sea necesario
+        }
+
+        public class Paging
+        {
+            public int limit { get; set; }
+            public int offset { get; set; }
+            public int total { get; set; }
         }
     }
 }

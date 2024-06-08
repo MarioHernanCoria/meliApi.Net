@@ -27,14 +27,29 @@ namespace meliApi.Controllers
 
         private async Task SetAuthorizationHeaderAsync()
         {
-            var tokenData = await _tokenServicios.ObtenerUltimoToken();
-            if (tokenData != null)
+            try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+                var tokenData = await _tokenServicios.ObtenerUltimoToken();
+
+                if (tokenData.expires_in > 21600)
+                {
+                    await _tokenServicios.RenewToken(tokenData.refresh_token);
+                    tokenData = await _tokenServicios.ObtenerUltimoToken();
+                }
+
+                if (tokenData != null)
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+                }
+                else
+                {
+                    throw new InvalidOperationException("No se pudo obtener un token válido.");
+                }
             }
-            else
+            catch (Exception ex) 
             {
-                throw new InvalidOperationException("No se pudo obtener un token válido.");
+
+                throw new InvalidOperationException("Error al establecer el encabezado de autorización.", ex);
             }
         }
 
@@ -205,7 +220,7 @@ namespace meliApi.Controllers
                 var jsonBody = JsonSerializer.Serialize(requestBody);
 
                 // Realizar la solicitud POST a la URL proporcionada
-                var response = await _httpClient.PostAsync("https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/trim/top_values",
+                var response = await _httpClient.PostAsync("https://api.mercadolibre.com/catalog_domains/MLA-CARS_AND_VANS/attributes/TRIM/top_values",
                                                         new StringContent(jsonBody, System.Text.Encoding.UTF8, "application/json"));
 
                 // Verificar si la solicitud fue exitosa

@@ -23,14 +23,29 @@ namespace meliApi.Controllers
 
         private async Task SetAuthorizationHeaderAsync()
         {
-            var tokenData = await _tokenServicios.ObtenerUltimoToken();
-            if (tokenData != null)
+            try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+                var tokenData = await _tokenServicios.ObtenerUltimoToken();
+
+                if (tokenData.expires_in > 21600)
+                {
+                    await _tokenServicios.RenewToken(tokenData.refresh_token);
+                    tokenData = await _tokenServicios.ObtenerUltimoToken();
+                }
+
+                if (tokenData != null)
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.access_token);
+                }
+                else
+                {
+                    throw new InvalidOperationException("No se pudo obtener un token válido.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                throw new InvalidOperationException("No se pudo obtener un token válido.");
+
+                throw new InvalidOperationException("Error al establecer el encabezado de autorización.", ex);
             }
         }
 

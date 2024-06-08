@@ -1,7 +1,9 @@
+using meliApi.Controllers;
 using meliApi.Data;
 using meliApi.Data.Repositories.Implementacion;
 using meliApi.Data.Repositories.Interface;
 using meliApi.Servicios;
+using meliApi.Servicios.Items;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -21,6 +23,9 @@ namespace meliApi
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<UsuarioServicio>();
             builder.Services.AddScoped<TokenServicios>();
+            builder.Services.AddScoped<MeliController>();
+            builder.Services.AddScoped<ItemService>();
+            builder.Services.AddHttpClient<IItemService, ItemService>();
             builder.Services.AddScoped<IProductosCollection, ProductoCollection>();
 
             // Configuración de autenticación JWT
@@ -46,13 +51,12 @@ namespace meliApi
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowSpecificOrigin",
-                    builder =>
-                    {
-                        builder.WithOrigins("http://example.com")
-                               .AllowAnyHeader()
-                               .AllowAnyMethod();
-                    });
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
             });
 
             var app = builder.Build();
@@ -67,7 +71,7 @@ namespace meliApi
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseCors("AllowSpecificOrigin");
+            app.UseCors("AllowAll");
             app.MapControllers();
 
             app.Run();
