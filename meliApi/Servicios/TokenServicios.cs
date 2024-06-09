@@ -23,14 +23,9 @@ namespace meliApi.Servicios
             _configuration = configuration;
         }
 
-        public async Task<TokenData> ObtenerToken(string url)
+        public async Task<TokenData> ObtenerToken(string code)
         {
 
-            Uri uri = new Uri(url);
-
-            NameValueCollection queryParameters = HttpUtility.ParseQueryString(uri.Query);
-
-            string code = queryParameters["code"];
 
 
             if (string.IsNullOrEmpty(code))
@@ -97,6 +92,7 @@ namespace meliApi.Servicios
                 throw new HttpRequestException($"Error al obtener el token de Mercado Libre. Estado de respuesta: {response.StatusCode}, Detalles: {errorResponse}");
             }
         }
+
 
 
         public async Task<TokenData> RenewToken(string refreshToken)
