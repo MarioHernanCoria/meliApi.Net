@@ -43,7 +43,7 @@ namespace meliApi.Entidades
         public Shipping shipping { get; set; }
         public string international_delivery_mode { get; set; }
         public SellerAddress seller_address { get; set; }
-        public object seller_contact { get; set; }
+        public SellerContact seller_contact { get; set; }
         public Location location { get; set; }
         public Geolocation geolocation { get; set; }
         public List<object> coverage_areas { get; set; }
@@ -57,9 +57,9 @@ namespace meliApi.Entidades
         public string warranty { get; set; }
         public string catalog_product_id { get; set; }
         public string domain_id { get; set; }
-        public object seller_custom_field { get; set; }
+        public SellerCustomField seller_custom_field { get; set; }
         public string parent_item_id { get; set; }
-        public object differential_pricing { get; set; }
+        public DifferentialPricing differential_pricing { get; set; }
         public List<string> deal_ids { get; set; }
         public bool automatic_relist { get; set; }
         public DateTime date_created { get; set; }
@@ -68,6 +68,17 @@ namespace meliApi.Entidades
         public bool catalog_listing { get; set; }
         public List<object> item_relations { get; set; }
         public List<string> channels { get; set; }
+    }
+
+
+    public class SellerCustomField
+    {
+
+    }
+
+    public class DifferentialPricing
+    {
+
     }
 
     public class SaleTerm
@@ -96,6 +107,11 @@ namespace meliApi.Entidades
         public string size { get; set; }
         public string max_size { get; set; }
         public string quality { get; set; }
+    }
+
+    public class SellerContact
+    {
+
     }
 
     public class Shipping
