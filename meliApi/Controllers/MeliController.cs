@@ -48,6 +48,31 @@ namespace meliApi.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ObtenerBrand()
+        {
+            try
+            {
+
+                string endpoint = "https://admin.publicar.shop/meli/api/callback";
+
+                HttpResponseMessage response = await _httpClient.PostAsync(endpoint, null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return Ok();
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, $"La solicitud falló con el código de estado: {response.StatusCode}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, $"Error al realizar la solicitud HTTP: {ex.Message}");
+            }
+        }
+
 
         [HttpGet("items/EspecificacionesPorItem")]
         public async Task<IActionResult> ObtenerEspecificacionesPorItems(string itemId)

@@ -1,4 +1,4 @@
-﻿using meliApi.Entidades.meliApi.Entidades;
+﻿
 using meliApi.Entidades;
 using Microsoft.EntityFrameworkCore;
 

@@ -13,6 +13,7 @@ namespace meliApi.Data.Repositories
             client = new MongoClient("mongodb://localhost:27017/");
 
             db = client.GetDatabase("Producto");
+            db = client.GetDatabase("Item");
         }
     }
 }

@@ -2,6 +2,7 @@
 using meliApi.Entidades;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using System.Text;
 using static meliApi.Controllers.MeliController;
 
 namespace meliApi.Servicios.Items
@@ -17,6 +18,33 @@ namespace meliApi.Servicios.Items
             _productoCollection = productosCollection;
             _httpClient = httpClient;
             _tokenServicios = tokenServicios;
+        }
+
+        public async Task Subscripcion(int userId)  
+        {
+            await SetAuthorizationHeaderAsync();
+
+            string endpoint = $"https://api.mercadolibre.com/users/{userId}/webhooks";
+            var webhookData = new
+            {
+                topic = "items",
+                callback_url = "https://tu-url-de-retroceso/meli-webhook",
+                lease_time = 86400 // Duración de la suscripción en segundos (por ejemplo, 24 horas)
+            };
+
+            var json = JsonConvert.SerializeObject(webhookData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await _httpClient.PostAsync(endpoint, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // La suscripción fue exitosa
+            }
+            else
+            {
+                throw new HttpRequestException($"La solicitud falló con el código de estado: {response.StatusCode}");
+            }
         }
 
 

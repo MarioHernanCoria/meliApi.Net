@@ -25,6 +25,7 @@ namespace meliApi
             builder.Services.AddScoped<TokenServicios>();
             builder.Services.AddScoped<MeliController>();
             builder.Services.AddScoped<ItemService>();
+            builder.Services.AddScoped<IItemCollection, ItemCollection>();
             builder.Services.AddHttpClient<IItemService, ItemService>();
             builder.Services.AddScoped<IProductosCollection, ProductoCollection>();
 

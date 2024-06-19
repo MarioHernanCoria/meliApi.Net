@@ -169,7 +169,7 @@ namespace meliApi.Servicios
             {
                 access_token = ultimoToken.AccessToken,
                 token_type = ultimoToken.TokenType,
-                expires_in = (int)(expirationDate - DateTime.Now).TotalSeconds,
+                expires_in = (int)(DateTime.Now - expirationDate).TotalSeconds,
                 scope = ultimoToken.Scope,
                 user_id = ultimoToken.UsuarioId,
                 refresh_token = ultimoToken.RefreshToken,
